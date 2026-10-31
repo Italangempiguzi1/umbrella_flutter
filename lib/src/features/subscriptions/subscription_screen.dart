@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/async_value_widget.dart';
 import '../../core/widgets/primary_button.dart';
@@ -36,9 +38,13 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     }
     setState(() => _loading = true);
     try {
-      final payment = await ref.read(paymentRepositoryProvider).initiate(planCode: code, provider: _provider, phone: _phone.text.trim());
+      final payment = await ref.read(paymentRepositoryProvider).initiate(
+          planCode: code, provider: _provider, phone: _phone.text.trim());
       ref.invalidate(paymentHistoryProvider);
-      if (mounted) showSnack(context, 'Payment created: ${payment.status}. Connect provider callback to activate subscription.');
+      if (mounted) {
+        showSnack(context,
+            'Payment created: ${payment.status}. Connect provider callback to activate subscription.');
+      }
     } catch (error) {
       if (mounted) showSnack(context, error.toString());
     } finally {
@@ -82,38 +88,69 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               data: (sub) => sub.active
                   ? Card(
                       child: ListTile(
-                        leading: const Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
-                        title: Text('Current: ${sub.subscription?.plan?.name ?? 'Active plan'}', style: const TextStyle(fontWeight: FontWeight.w900)),
-                        subtitle: Text('Expires: ${sub.subscription?.expiresAt?.toLocal().toString().split('.').first ?? 'N/A'}'),
+                        leading: const Icon(Icons.check_circle_rounded,
+                            color: Colors.greenAccent),
+                        title: Text(
+                            'Current: ${sub.subscription?.plan?.name ?? 'Active plan'}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w900)),
+                        subtitle: Text(
+                            'Expires: ${sub.subscription?.expiresAt?.toLocal().toString().split('.').first ?? 'N/A'}'),
                       ),
                     )
                   : const SizedBox.shrink(),
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
             ),
-            const Text('Premium entertainment for every viewer', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -.7)),
+            const Text('Premium entertainment for every viewer',
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -.7)),
             const SizedBox(height: 8),
-            const Text('Select a subscription plan to unlock long-form content, reels, ad-free streaming and creator reward points.', style: TextStyle(color: AppTheme.muted, height: 1.5)),
+            const Text(
+                'Select a subscription plan to unlock long-form content, reels, ad-free streaming and creator reward points.',
+                style: TextStyle(color: AppTheme.muted, height: 1.5)),
             const SizedBox(height: 18),
-            ...items.map((plan) => _PlanCard(plan: plan, selected: _selectedCode == plan.code, onTap: () => setState(() => _selectedCode = plan.code))),
+            ...items.map((plan) => _PlanCard(
+                plan: plan,
+                selected: _selectedCode == plan.code,
+                onTap: () => setState(() => _selectedCode = plan.code))),
             const SizedBox(height: 18),
             DropdownButtonFormField<String>(
-              value: _provider,
+              initialValue: _provider,
               decoration: const InputDecoration(labelText: 'Payment provider'),
               items: const [
-                DropdownMenuItem(value: 'mobile_money', child: Text('Mobile Money')),
+                DropdownMenuItem(
+                    value: 'mobile_money', child: Text('Mobile Money')),
                 DropdownMenuItem(value: 'card', child: Text('Card')),
                 DropdownMenuItem(value: 'bank', child: Text('Bank')),
                 DropdownMenuItem(value: 'internal', child: Text('Internal')),
               ],
-              onChanged: (value) => setState(() => _provider = value ?? 'mobile_money'),
+              onChanged: (value) =>
+                  setState(() => _provider = value ?? 'mobile_money'),
             ),
             const SizedBox(height: 12),
-            TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(prefixIcon: Icon(Icons.phone_rounded), hintText: 'Payment phone number')),
+            TextField(
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.phone_rounded),
+                    hintText: 'Payment phone number')),
             const SizedBox(height: 18),
-            PrimaryButton(label: 'Start Payment', icon: Icons.payments_rounded, onPressed: _initiatePayment, isLoading: _loading),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(onPressed: _loading ? null : _activateDev, icon: const Icon(Icons.science_rounded), label: const Text('Activate for MVP Testing')),
+            PrimaryButton(
+                label: 'Start Payment',
+                icon: Icons.payments_rounded,
+                onPressed: _initiatePayment,
+                isLoading: _loading),
+            if (!kReleaseMode && AppConfig.enableDevSubscription) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _loading ? null : _activateDev,
+                icon: const Icon(Icons.science_rounded),
+                label: const Text('Activate for MVP Testing'),
+              ),
+            ],
           ],
         ),
       ),
@@ -122,7 +159,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 }
 
 class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.plan, required this.selected, required this.onTap});
+  const _PlanCard(
+      {required this.plan, required this.selected, required this.onTap});
 
   final Plan plan;
   final bool selected;
@@ -142,21 +180,30 @@ class _PlanCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(26),
             gradient: selected ? AppTheme.heroGradient : null,
             color: selected ? null : AppTheme.surface,
-            border: Border.all(color: selected ? Colors.transparent : Colors.white10),
+            border: Border.all(
+                color: selected ? Colors.transparent : Colors.white10),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Expanded(child: Text(plan.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
+                  Expanded(
+                      child: Text(plan.name,
+                          style: const TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.w900))),
                   if (selected) const Icon(Icons.check_circle_rounded),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(moneyTzs(plan.priceTzs), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+              Text(moneyTzs(plan.priceTzs),
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.w900)),
               const SizedBox(height: 8),
-              Text(plan.description, style: TextStyle(color: selected ? Colors.white : AppTheme.muted, height: 1.45)),
+              Text(plan.description,
+                  style: TextStyle(
+                      color: selected ? Colors.white : AppTheme.muted,
+                      height: 1.45)),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -166,7 +213,8 @@ class _PlanCard extends StatelessWidget {
                   _Feature(label: plan.maxQuality),
                   _Feature(label: '${plan.monthlyAwardPoints} award points'),
                   if (plan.downloadsEnabled) const _Feature(label: 'Downloads'),
-                  if (plan.earlyAccessEnabled) const _Feature(label: 'Early access'),
+                  if (plan.earlyAccessEnabled)
+                    const _Feature(label: 'Early access'),
                 ],
               ),
             ],
@@ -186,8 +234,11 @@ class _Feature extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: Colors.black.withOpacity(.25), borderRadius: BorderRadius.circular(999)),
-      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+      decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: .25),
+          borderRadius: BorderRadius.circular(999)),
+      child: Text(label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
     );
   }
 }

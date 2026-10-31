@@ -6,9 +6,16 @@ build/
 .idea/
 .vscode/*.log
 *.iml
-android/
+.flutter-plugins-dependencies
 ios/
 linux/
 macos/
 windows/
 web/
+android/.gradle/
+android/local.properties
+android/app/build/
+android/app/.cxx/
+android/key.properties
+android/*.jks
+android/*.keystore
